@@ -1,0 +1,110 @@
+syntax = "proto2";
+
+package apollo.hdmap;
+
+import "modules/map/proto/map_id.proto";
+import "modules/map/proto/map_geometry.proto";
+
+message LaneBoundaryType {
+  enum Type {
+    UNKNOWN = 0;
+    DOTTED_YELLOW = 1;
+    DOTTED_WHITE = 2;
+    SOLID_YELLOW = 3;
+    SOLID_WHITE = 4;
+    DOUBLE_YELLOW = 5;
+    CURB = 6;
+  };
+  // Offset relative to the starting point of boundary
+  optional double s = 1;
+  // support multiple types
+  repeated Type types = 2;
+}
+
+message LaneBoundary {
+  optional Curve curve = 1;
+
+  optional double length = 2;
+  // indicate whether the lane boundary exists in real world
+  optional bool virtual = 3;
+  // in ascending order of s
+  repeated LaneBoundaryType boundary_type = 4;
+}
+
+// Association between central point to closest boundary.
+// 中心点是哪个点？ 车道中心线上的点
+message LaneSampleAssociation {
+  optional double s = 1;
+  optional double width = 2;
+}
+
+// A lane is part of a roadway, that is designated for use by a single line of
+// vehicles.
+// Most public roads (include highways) have more than two lanes.
+message Lane {
+  optional Id id = 1;
+
+  // Central lane as reference trajectory, not necessary to be the geometry
+  // central.
+  optional Curve central_curve = 2;
+
+  // Lane boundary curve.
+  optional LaneBoundary left_boundary = 3;
+  optional LaneBoundary right_boundary = 4;
+
+  // in meters.
+  optional double length = 5; // 在地图中，车道是有长度的，应该是以junction或其他元素来切分的
+
+  // Speed limit of the lane, in meters per second.
+  optional double speed_limit = 6;
+
+  repeated Id overlap_id = 7;
+
+  // All lanes can be driving into (or from).
+  repeated Id predecessor_id = 8; // 车辆从上个车道驶入现在这个车道，上个车道的id
+  repeated Id successor_id = 9; // 车辆从现在这个车道驶入下个车道，下个车道的id
+
+  // Neighbor lanes on the same direction.
+  repeated Id left_neighbor_forward_lane_id = 10; // 同向的左边车道
+  repeated Id right_neighbor_forward_lane_id = 11; // 同向的右边车道
+
+  enum LaneType {
+    NONE = 1;
+    CITY_DRIVING = 2;
+    BIKING = 3;
+    SIDEWALK = 4;
+    PARKING = 5;
+    SHOULDER = 6; // 路肩
+  };
+  optional LaneType type = 12;
+
+  enum LaneTurn {
+    NO_TURN = 1;
+    LEFT_TURN = 2;
+    RIGHT_TURN = 3;
+    U_TURN = 4; // 掉头
+  };
+  optional LaneTurn turn = 13;
+
+  repeated Id left_neighbor_reverse_lane_id = 14; // 与车辆行驶方向相反方向，左边相邻的车道
+  repeated Id right_neighbor_reverse_lane_id = 15; // 大家都校友行驶，自车右边怎会有反方向的车？
+
+  optional Id junction_id = 16;
+
+  // Association between central point to closest boundary.
+  repeated LaneSampleAssociation left_sample = 17; // 车道中心到最近左边车道边界的距离
+  repeated LaneSampleAssociation right_sample = 18; // 车道中心到最近右边车道边界的距离
+
+  enum LaneDirection {
+    FORWARD = 1;
+    BACKWARD = 2; // 怎么产生的？还能向后运动？
+    BIDIRECTION = 3; // 一个车道有两个行驶方向？比如比较宽的一条路，画不出两个车道，但是能允许车辆回车，所以可以双向
+  }
+  optional LaneDirection direction = 19;
+
+  // Association between central point to closest road boundary.
+  repeated LaneSampleAssociation left_road_sample = 20; // 车道中心到最近左边路面边界的距离
+  repeated LaneSampleAssociation right_road_sample = 21;
+
+  repeated Id self_reverse_lane_id = 22;
+}

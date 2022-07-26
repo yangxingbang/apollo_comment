@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+package apollo.hdmap;
+
+// Global unique ids for all objects (include lanes, junctions, overlaps, etc).
+// 全局id，那么是不是相应的就有局部id？
+message Id {
+  optional string id = 1;
+}

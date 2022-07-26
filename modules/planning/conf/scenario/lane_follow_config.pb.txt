@@ -1,0 +1,135 @@
+scenario_type: LANE_FOLLOW
+stage_type: LANE_FOLLOW_DEFAULT_STAGE
+stage_config: {
+  stage_type: LANE_FOLLOW_DEFAULT_STAGE
+  enabled: true
+  // 调用LaneChangeDecider
+  task_type: LANE_CHANGE_DECIDER
+
+  // 调用PathReuseDecider
+  // 如果路径复用，跳过以下所有path相关的决策任务
+  task_type: PATH_REUSE_DECIDER
+
+  // 调用PathLaneBorrowDecider
+  task_type: PATH_LANE_BORROW_DECIDER
+
+  // 调用PathBoundsDecider
+  // 路径边界，生成fallback（必须生成，只有一种情况，就是本车道停车，在靠边停车、换道、借道全部失败的情况下执行）的边界
+  // 至少生成2个boundary，一个是fallback的，一个是pullover、换道、本车道、借道的
+  task_type: PATH_BOUNDS_DECIDER
+
+  // 调用PiecewiseJerkPathOptimizer
+  // 根据每个boudary生成一条路径
+  task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+
+  // 调用PathAssessmentDecider
+  // 每条参考线会生成至少2条路径，在这里进行排序，选出最优的路径？
+  task_type: PATH_ASSESSMENT_DECIDER
+
+  // 调用PathDecider
+  // 再对障碍物进行一次决策？
+  task_type: PATH_DECIDER
+
+  // 调用RuleBasedStopDecider
+  task_type: RULE_BASED_STOP_DECIDER
+
+  // 根据参考线，动力学模型，障碍物，计算了st的可行域
+  // 使用它，就不使用SPEED_BOUNDS_PRIORI_DECIDER和SPEED_HEURISTIC_OPTIMIZER
+  // 现已废弃
+  // 根据对于障碍物的决策以及道路限速来构建ST图中每⼀时刻的上下限范围?
+  task_type: ST_BOUNDS_DECIDER
+
+  // 调用SpeedBoundsDecider
+  // boundary_buffer为障碍物向外膨胀的距离，默认为0.25
+  // 求障碍物的占用空间
+  // 1. 根据道路限速，曲率，障碍物信息计算对于path每个点的限速?
+  // 2. 对上⼀task⽣成的ST boundary进⾏更细致的调整?
+  task_type: SPEED_BOUNDS_PRIORI_DECIDER
+
+  // 调用PathTimeHeuristicOptimizer
+  // 将障碍物占用空间放到采样空间中求DP，得最优解
+  // 利⽤动态规划&回溯的⽅法在ST图中搜索出⼀系列可⾏的速度点集 ?
+  task_type: SPEED_HEURISTIC_OPTIMIZER
+
+  // 调用SpeedDecider
+  // DP会求出一条带有速度的路径，根据它来确定是超车还是跟车
+  // 对障碍物再做⼀次决策?
+  task_type: SPEED_DECIDER
+
+  // 调用SpeedBoundsDecider
+  // boundary_buffer为0.1
+  // 根据超车或跟车的模式，缩小可行域，缩小膨胀体积，再求障碍物的占用空间
+  task_type: SPEED_BOUNDS_FINAL_DECIDER
+
+  # task_type: PIECEWISE_JERK_SPEED_OPTIMIZER
+  // 调用PiecewiseJerkSpeedNonlinearOptimizer
+  // 一次ipopt调用了三次QP
+  // 对SPEED_HEURISTIC_OPTIMIZER的速度点集进⾏线性插值得到折线轨迹，再进⾏⼆次平滑优化;
+  // 对轨迹点上的speed_limit和curvature进⾏⼆次优化，最终
+  // 对速度点集进⾏⾮线性优化?
+  task_type: PIECEWISE_JERK_NONLINEAR_SPEED_OPTIMIZER
+  task_type: RSS_DECIDER
+
+  task_config: {
+    task_type: LANE_CHANGE_DECIDER
+    // 变道的紧急检查？那还有不紧急的？
+    lane_change_decider_config {
+      enable_lane_change_urgency_check: true
+    }
+  }
+
+  task_config: {
+    task_type: PATH_REUSE_DECIDER
+    path_reuse_decider_config {
+      reuse_path: false
+    }
+  }
+
+  // 静止障碍物是否借道
+  // 覆盖了planning_config.pbt.txt
+  task_config: {
+    task_type: PATH_LANE_BORROW_DECIDER
+    path_lane_borrow_decider_config {
+      allow_lane_borrowing: true
+    }
+  }
+  task_config: {
+    task_type: PATH_BOUNDS_DECIDER
+  }
+  task_config: {
+    task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+  }
+  task_config: {
+    task_type: PATH_ASSESSMENT_DECIDER
+  }
+  task_config: {
+    task_type: PATH_DECIDER
+  }
+  task_config: {
+    task_type: ST_BOUNDS_DECIDER
+  }
+  task_config: {
+    task_type: SPEED_BOUNDS_PRIORI_DECIDER
+  }
+  task_config: {
+    task_type: SPEED_BOUNDS_FINAL_DECIDER
+  }
+  task_config: {
+    task_type: SPEED_HEURISTIC_OPTIMIZER
+  }
+  task_config: {
+    task_type: SPEED_DECIDER
+  }
+  task_config: {
+    task_type: PIECEWISE_JERK_SPEED_OPTIMIZER
+  }
+  task_config: {
+    task_type: RSS_DECIDER
+  }
+  task_config: {
+    task_type: RULE_BASED_STOP_DECIDER
+  }
+  task_config: {
+    task_type: PIECEWISE_JERK_NONLINEAR_SPEED_OPTIMIZER
+  }
+}
